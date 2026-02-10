@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+pydantic
+pandas
+torch
+transformers
+bitsandbytes
+accelerate
+nltk
+langchain-huggingface
+langchain-chroma
+langchain-community
+langchain-classic
+streamlit
+requests
+sentence-transformers
