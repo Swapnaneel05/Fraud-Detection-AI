@@ -1,16 +1,31 @@
+# --- Core Build & Environment ---
+pyyaml==6.0.1
+setuptools
+wheel
+cython
+
+# --- Web Interface & API ---
+streamlit
+requests
+pydantic
 fastapi
 uvicorn
-pydantic
+
+# --- Data Processing ---
 pandas
+numpy
+nltk
+
+# --- Machine Learning & AI Engine ---
 torch
 transformers
-bitsandbytes
 accelerate
-nltk
+bitsandbytes>=0.45.2
+
+# --- LangChain & RAG Pipeline ---
 langchain-huggingface
 langchain-chroma
 langchain-community
+langchain-core
 langchain-classic
-streamlit
-requests
 sentence-transformers
