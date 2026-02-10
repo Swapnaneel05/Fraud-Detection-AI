@@ -1,3 +1,5 @@
+import nltk
+nltk.download(['punkt', 'stopwords', 'wordnet', 'punkt_tab'], quiet=True)
 import streamlit as st
 import pandas as pd
 import re
@@ -116,3 +118,4 @@ if vector_db:
 
 st.divider()
 st.caption("Powered by LangChain, ChromaDB, and Zephyr-7B-beta.")
+
