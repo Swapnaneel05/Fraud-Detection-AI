@@ -62,7 +62,7 @@ def call_zephyr_api(prompt_text):
     
     payload = {
         "inputs": prompt_text,
-        "parameters": {"max_new_tokens": 100, "temperature": 0.1}
+        "parameters": {"max_new_tokens": 100, "temperature": 0.001}
     }
     
     response = requests.post(API_URL, headers=headers, json=payload)
@@ -117,6 +117,7 @@ if vector_db:
 
 st.divider()
 st.caption("Powered by LangChain, ChromaDB, and Zephyr-7B-beta.")
+
 
 
 
