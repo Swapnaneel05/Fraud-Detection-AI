@@ -92,13 +92,16 @@ if vector_db:
                 
                 # 2. Construct Prompt exactly as in your notebook
                 template = f"""
-                You are a Fraud Detector. Analyse them and Predict is the Given Statement is Fraud or not? 
-                If you don't know return "I am Sorry, I don't know the answer!" 
-                Reply with "Fraud" and "Non-Fraud", no hallucination, no extra words.
-                Question: {user_input}
+                <|system|>
+                You are a Fraud Detector. Use the context to answer. 
+                Example 1: Win a free trip! -> Answer: Fraud
+                Example 2: Meet me at 5pm. -> Answer: Non-Fraud
+                </s>
+                <|user|>
                 Context: {context}
-                Answer:
-                """
+                Analyze: {user_input}
+                Answer:</s>
+                <|assistant|>"""
                 
                 # 3. Get AI Verdict
                 raw_response = call_zephyr_api(template)
@@ -114,5 +117,6 @@ if vector_db:
 
 st.divider()
 st.caption("Powered by LangChain, ChromaDB, and Zephyr-7B-beta.")
+
 
 
