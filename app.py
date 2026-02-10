@@ -1,23 +1,118 @@
 import streamlit as st
+import pandas as pd
+import re
+import os
+import nltk
 import requests
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
 
-st.title("🛡️ Fraud Detection System")
-sms_input = st.text_area("Enter SMS to analyze:")
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="Fraud Guard AI", page_icon="🛡️")
 
-if st.button("Check for Fraud"):
-    if sms_input:
-        with st.spinner("Analyzing..."):
-            # REPLACE with your deployed Render URL
-            URL = "https://your-backend-name.onrender.com/predict" 
-            response = requests.post(URL, json={"text": sms_input})
-            
-            if response.status_code == 200:
-                answer = response.json().get("answer")
-                # Add block to display output
-                st.subheader("Result:")
-                if "Fraud" in answer and "Non-Fraud" not in answer:
-                    st.error(answer)
+# --- INITIALIZE RESOURCES (Cached to run only once) ---
+@st.cache_resource
+def initialize_system():
+    # 1. Setup NLTK exactly as in your notebook
+    nltk.download(['punkt', 'stopwords', 'wordnet', 'punkt_tab'], quiet=True)
+    stop_words = set(stopwords.words('english'))
+
+    # 2. Your Exact Cleaning Logic
+    def clean_text(sms):
+        sms = str(sms).encode('ascii', 'ignore').decode()
+        sms = re.sub(r'[^\w\s]', '', sms)
+        sms = re.sub(r'\d+', '', sms)
+        sms = sms.lower()
+        tokens = word_tokenize(sms)
+        return [word for word in tokens if word not in stop_words]
+
+    # 3. Build Vector Store from CSV
+    # Ensure 'SMS fraud Dataset.csv' is in your GitHub repo
+    if os.path.exists('SMS fraud Dataset.csv'):
+        df = pd.read_csv('SMS fraud Dataset.csv')
+        df['cleaned_sms'] = df['sms'].apply(clean_text)
+        df['label'] = df['label'].replace({0: 'non-fraud', 1: 'fraud'})
+        
+        documents = []
+        for i, row in df.iterrows():
+            # Maintaining your exact notebook document format
+            doc_content = f"id:{i}\\Fillings:{row['cleaned_sms']}\\Fraud_Status:{row['label']}"
+            documents.append(Document(page_content=doc_content))
+        
+        vector_db = Chroma.from_documents(
+            documents=documents,
+            embedding=HuggingFaceEmbeddings(),
+            persist_directory="./chroma_db"
+        )
+        return vector_db, clean_text
+    else:
+        st.error("Dataset not found! Please upload 'SMS fraud Dataset.csv' to your repository.")
+        return None, None
+
+# --- AI INFERENCE LOGIC (Serverless for 24/7 Uptime) ---
+def call_zephyr_api(prompt_text):
+    API_URL = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
+    # Access token from Streamlit Secrets
+    headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
+    
+    payload = {
+        "inputs": prompt_text,
+        "parameters": {"max_new_tokens": 100, "temperature": 0.1}
+    }
+    
+    response = requests.post(API_URL, headers=headers, json=payload)
+    if response.status_code == 200:
+        return response.json()[0]['generated_text']
+    else:
+        return "Error: Could not connect to the AI model."
+
+# --- MAIN APP INTERFACE ---
+st.title("🛡️ SMS Fraud Investigator")
+st.markdown("Analyze messages using your custom RAG pipeline and Zephyr-7B.")
+
+vector_db, clean_text_func = initialize_system()
+
+if vector_db:
+    user_input = st.text_area("Paste the message content:", height=150)
+
+    if st.button("Start Investigation"):
+        if not user_input.strip():
+            st.warning("Please enter a message first.")
+        else:
+            with st.spinner("Searching database and analyzing..."):
+                # 1. RAG Step: Find most relevant context
+                # Clean and search exactly as per your notebook logic
+                results = vector_db.similarity_search(user_input, k=1)
+                context = results[0].page_content
+                
+                # 2. Construct Prompt exactly as in your notebook
+                template = f"""
+                You are a Fraud Detector. Analyse them and Predict is the Given Statement is Fraud or not? 
+                If you don't know return "I am Sorry, I don't know the answer!" 
+                Reply with "Fraud" and "Non-Fraud", no hallucination, no extra words.
+                Question: {user_input}
+                Context: {context}
+                Answer:
+                """
+                
+                # 3. Get AI Verdict
+                raw_response = call_zephyr_api(template)
+                
+                # Extract the final answer part
+                final_answer = raw_response.split("Answer:")[-1].strip()
+
+                # 4. Display Result
+                st.subheader("Investigation Verdict")
+                if "fraud" in final_answer.lower() and "non-fraud" not in final_answer.lower():
+                    st.error(f"⚠️ POTENTIAL FRAUD DETECTED: {final_answer}")
                 else:
-                    st.success(answer)
-            else:
-                st.error("Connection to AI engine failed.")
+                    st.success(f"✅ SAFE MESSAGE: {final_answer}")
+                
+                with st.expander("View Evidence (Context)"):
+                    st.write(context)
+
+st.divider()
+st.caption("Powered by LangChain, ChromaDB, and Zephyr-7B-beta.")
