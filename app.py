@@ -64,7 +64,7 @@ def call_zephyr_api(prompt_text):
         "inputs": prompt_text,
         "parameters": {"max_new_tokens": 100, "temperature": 0.001}
     }
-    
+    retriever = langchain_chroma.as_retriever(search_kwargs={"k": 5})
     response = requests.post(API_URL, headers=headers, json=payload)
     if response.status_code == 200:
         return response.json()[0]['generated_text']
@@ -117,6 +117,7 @@ if vector_db:
 
 st.divider()
 st.caption("Powered by LangChain, ChromaDB, and Zephyr-7B-beta.")
+
 
 
 
