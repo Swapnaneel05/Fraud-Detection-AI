@@ -54,17 +54,20 @@ def initialize_rag():
 # --- LLAMA 3 INFERENCE LOGIC ---
 def call_llama_api(prompt_text):
     # Meta-Llama-3-8B-Instruct is safer and more reliable than Zephyr-7B
-    API_URL = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct"
+    API_URL = "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct"
     headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
     
     payload = {
-        "inputs": prompt_text,
-        "parameters": {
-            "max_new_tokens": 100, 
-            "temperature": 0.01,  # Set low for strict classification
-            "return_full_text": False
-        }
+    "inputs": prompt_text,
+    "parameters": {
+        "max_new_tokens": 100, 
+        "temperature": 0.01,
+        "return_full_text": False
+    },
+    "options": {
+        "wait_for_model": True  # This prevents the 503 error
     }
+}
     
     response = requests.post(API_URL, headers=headers, json=payload)
     if response.status_code == 200:
@@ -111,3 +114,4 @@ if vector_db:
                 
                 with st.expander("View Retrieved Evidence"):
                     st.write(context)
+
