@@ -104,18 +104,15 @@ if vector_db:
                 raw_response = call_zephyr_api(template)
                 
                 # Extract the final answer part
-                final_answer = raw_response.split("Answer:")[-1].strip()
-
-                # 4. Display Result
-                st.subheader("Investigation Verdict")
-                if "fraud" in final_answer.lower() and "non-fraud" not in final_answer.lower():
-                    st.error(f"⚠️ POTENTIAL FRAUD DETECTED: {final_answer}")
+                final_answer = raw_response.lower()
+                if "non-fraud" in final_answer:
+                    st.success("✅ SAFE MESSAGE: Non-Fraud")
+                elif "fraud" in final_answer:
+                    st.error("⚠️ POTENTIAL FRAUD DETECTED: Fraud")
                 else:
-                    st.success(f"✅ SAFE MESSAGE: {final_answer}")
-                
-                with st.expander("View Evidence (Context)"):
-                    st.write(context)
+                    st.warning(f"AI could not determine clearly. Full response: {raw_response}")
 
 st.divider()
 st.caption("Powered by LangChain, ChromaDB, and Zephyr-7B-beta.")
+
 
