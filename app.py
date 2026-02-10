@@ -64,7 +64,6 @@ def call_zephyr_api(prompt_text):
         "inputs": prompt_text,
         "parameters": {"max_new_tokens": 100, "temperature": 0.001}
     }
-    retriever = langchain_chroma.as_retriever(search_kwargs={"k": 5})
     response = requests.post(API_URL, headers=headers, json=payload)
     if response.status_code == 200:
         return response.json()[0]['generated_text']
@@ -87,7 +86,7 @@ if vector_db:
             with st.spinner("Searching database and analyzing..."):
                 # 1. RAG Step: Find most relevant context
                 # Clean and search exactly as per your notebook logic
-                results = vector_db.similarity_search(user_input, k=1)
+                results = vector_db.similarity_search(user_input, k=5)
                 context = results[0].page_content
                 
                 # 2. Construct Prompt exactly as in your notebook
@@ -117,6 +116,7 @@ if vector_db:
 
 st.divider()
 st.caption("Powered by LangChain, ChromaDB, and Zephyr-7B-beta.")
+
 
 
 
