@@ -1,28 +1,16 @@
-# --- Critical Fixes for Build Errors ---
+# Essential Build Fixes
 pyyaml==6.0.1
 cython<3.0.0
-setuptools
-wheel
 
-# --- Web Interface & API ---
+# Core App
 streamlit
-requests==2.32.4
-pydantic
-
-# --- Data & NLP Processing ---
+requests>=2.32.5
 pandas
-numpy
 nltk
 
-# --- Machine Learning & AI ---
-accelerate
-bitsandbytes>=0.45.2
-
-# --- LangChain & RAG Pipeline ---
+# AI & RAG (No version pins to avoid backtracking)
 langchain-huggingface
 langchain-chroma
 langchain-community
 langchain-core
-langchain-classic
 sentence-transformers
-
