@@ -15,8 +15,6 @@ numpy
 nltk
 
 # --- Machine Learning & AI ---
-torch
-transformers
 accelerate
 bitsandbytes>=0.45.2
 
@@ -27,3 +25,4 @@ langchain-community
 langchain-core
 langchain-classic
 sentence-transformers
+
