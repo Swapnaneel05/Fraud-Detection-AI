@@ -49,31 +49,33 @@ def initialize_system():
 
 # --- UPDATED LLAMA 3 ROUTER API ---
 def call_llama_api(prompt_text):
-    # This is the NEW stable endpoint for Llama 3
-    API_URL = "meta-llama/Llama-3.1-8B-Instruct"
+    # Updated stable 2026 router endpoint
+    API_URL = "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct"
+    
     headers = {
         "Authorization": f"Bearer {st.secrets['HF_TOKEN']}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-Wait-For-Model": "true" # Extra header to prevent 503/404 during load
     }
     
     payload = {
         "inputs": prompt_text,
         "parameters": {
-            "max_new_tokens": 100, 
+            "max_new_tokens": 50,
             "temperature": 0.01,
             "return_full_text": False
-        },
-        "options": {"wait_for_model": True}
+        }
     }
     
-    response = requests.post(API_URL, headers=headers, json=payload)
-    
-    if response.status_code == 200:
-        return response.json()[0]['generated_text']
-    elif response.status_code == 404:
-        return "ERROR_404: The model endpoint was not found. Please check if you have accepted the Llama 3 terms on Hugging Face."
-    else:
-        return f"Error {response.status_code}: {response.text}"
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+        if response.status_code == 200:
+            return response.json()[0]['generated_text']
+        else:
+            # Better error reporting to help you debug
+            return f"Model Error {response.status_code}: {response.text}"
+    except Exception as e:
+        return f"Connection Error: {str(e)}"
 
 # --- UI ---
 st.title("🛡️ SMS Fraud Investigation (Llama 3)")
@@ -85,7 +87,7 @@ if vector_db:
     if st.button("Start AI Investigation"):
         if user_input:
             with st.spinner("Consulting Llama 3..."):
-                results = vector_db.similarity_search(user_input, k=3)
+                results = vector_db.similarity_search(user_input, k=5)
                 context = "\n".join([doc.page_content for doc in results])
                 
                 # Native Llama 3 Prompt Format
@@ -105,4 +107,5 @@ if vector_db:
                     st.error(f"⚠️ FRAUD: {raw_response}")
                 else:
                     st.warning(f"Ambiguous: {raw_response}")
+
 
