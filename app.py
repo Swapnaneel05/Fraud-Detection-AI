@@ -50,7 +50,7 @@ def initialize_system():
 # --- UPDATED LLAMA 3 ROUTER API ---
 def call_llama_api(prompt_text):
     # This is the NEW stable endpoint for Llama 3
-    API_URL = "https://router.huggingface.co/hf-inference/models/meta-llama/Meta-Llama-3-8B-Instruct"
+    API_URL = "meta-llama/Llama-3.1-8B-Instruct"
     headers = {
         "Authorization": f"Bearer {st.secrets['HF_TOKEN']}",
         "Content-Type": "application/json"
@@ -105,3 +105,4 @@ if vector_db:
                     st.error(f"⚠️ FRAUD: {raw_response}")
                 else:
                     st.warning(f"Ambiguous: {raw_response}")
+
